@@ -1,0 +1,22 @@
+{
+    "name": "skysplit/chess",
+    "description": "Chess written in PHP",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Tomek Romik",
+            "email": "manetamajster@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Chess\\": "src/"
+        }
+    },
+    "require": {},
+    "require-dev": {
+        "symfony/var-dumper": "^3.1",
+        "psy/psysh": "^0.7.2"
+    }
+}
