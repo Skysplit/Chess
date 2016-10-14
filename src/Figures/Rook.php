@@ -41,14 +41,14 @@ class Rook extends AbstractFigure implements Castles
     /**
      * {@inheritdoc}
      */
-    public function canCastle(): bool
+    public function canCastle(string $x, int $y): bool
     {
         $border = $this->board->height();
 
         if ($this->getPlayer()->doesMoveUpwards()) {
-            $border = $border[0];
+            $border = array_shift($border);
         } else {
-            $border = end($border);
+            $border = array_pop($border);
         }
 
         return $this->y === $border && ! $this->wasMoved();

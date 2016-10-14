@@ -1,10 +1,10 @@
 <?php
 
 namespace Chess\Figures;
+
 use Chess\AbstractFigure;
 use Chess\Interfaces\Figure as FigureInterface;
 use Chess\Interfaces\Figures\King as KingInterface;
-use Chess\Interfaces\Figures\Castles;
 use Chess\Traits\Figures\Moves\Askew;
 use Chess\Traits\Figures\Moves\Alongside;
 
@@ -13,7 +13,7 @@ class King extends AbstractFigure implements KingInterface
     use Askew, Alongside;
 
     /**
-     * @inheritDoc
+     * {@inheritdoc}
      */
     public function id(): string
     {
@@ -21,14 +21,13 @@ class King extends AbstractFigure implements KingInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritdoc}
      */
     public function canMoveTo(string $x, int $y): bool
     {
         $rangeX = range($this->x, $x);
         $countX = count($rangeX) - 1;
         $countY = abs($this->y - $y);
-        $enemyFigures = $this->flattenBoardFields();
 
         if (
             $countX <= 1
@@ -41,31 +40,78 @@ class King extends AbstractFigure implements KingInterface
                 $this->canMoveAlongside($x, $y)
             )
             &&
-            ! $this->isCheckedBy($enemyFigures, $x, $y)
+            ! $this->isCheckedBy($this->getEnemyFigures(), $x, $y)
         ) {
-            return true;
-        }
-
-        if ($this->canPerformCastling($enemyFigures, $x, $y)) {
             return true;
         }
 
         return false;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function isMoveCastling(string $x, int $y): bool
     {
-        return $this->getDistance($x, $y) === 2;
-    }
-
-
-    protected function getDistance(string $x, int $y)
-    {
-        return count(range($x, $y)) - 1;
+        return $this->getBoardStart() === $y && $this->getDistance($x, $y) === 2;
     }
 
     /**
-     * Determine wheter figure is checked
+     * {@inheritdoc}
+     */
+    public function canCastle(string $x, int $y): bool
+    {
+        $range = range($this->x, $x);
+        $enemyFigures = $this->getEnemyFigures();
+
+        foreach ($range as $toX) {
+            if ($this->isCheckedBy($enemyFigures, $toX, $y)) {
+                return false;
+            }
+        }
+
+        if ($this->wasMoved()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getCastlingPartnerPosition(string $x, int $y): array
+    {
+        $width = $this->board->width();
+
+        $toX = $x > $this->x ? array_pop($width) : array_shift($width);
+
+        return [$toX, $y];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getCastlingPartnerDestination(string $x, int $y): array
+    {
+        $range = range($this->x, $x);
+
+        return [$range[1], $y];
+    }
+
+    /**
+     * @param string $x
+     * @param int    $y
+     *
+     * @return int
+     */
+    protected function getDistance(string $x, int $y): int
+    {
+        return count(range($this->x, $x)) - 1;
+    }
+
+    /**
+     * Determine wheter figure is checked.
      *
      * @param mixed  $enemyFigures
      * @param string $x
@@ -85,11 +131,11 @@ class King extends AbstractFigure implements KingInterface
     }
 
     /**
-     * Returns array of enemy figures that are on board
+     * Returns array of enemy figures that are on board.
      *
      * @return FigureInterface[]
      */
-    protected function flattenBoardFields()
+    protected function getEnemyFigures()
     {
         // Get every field
         $fields = $this->board->fields();
@@ -102,39 +148,26 @@ class King extends AbstractFigure implements KingInterface
 
         // Filter empty fields and return only enemy figures
         $flat = array_filter($flat, function ($figure) {
-            /** @var FigureInterface|null $figure */
+            /* @var FigureInterface|null $figure */
             return $figure !== null && $figure->getPlayer() !== $this->getPlayer();
         });
 
         return $flat;
     }
 
-    protected function whichFigureCastlingIsPossbleWith($enemyFigures, string $x, int $y)
+    /**
+     * Get starting row of board.
+     *
+     * @return int
+     */
+    protected function getBoardStart(): int
     {
-        $border = $this->board->height();
+        $height = $this->board->height();
 
         if ($this->getPlayer()->doesMoveUpwards()) {
-            $border = $border[0];
+            return array_shift($height);
         } else {
-            $border = end($border);
-        }
-
-        if ($y !== $border) {
-            return false;
-        }
-
-        $border = $this->board->width();
-        $border = [
-            $border[0],
-            end($border),
-        ];
-
-        foreach ($border as $toX) {
-            $castlingFigure = $this->board->get($toX, $y);
-
-            if ($castlingFigure === null || ! $castlingFigure instanceof Castles) {
-                continue;
-            }
+            return array_pop($height);
         }
     }
 }

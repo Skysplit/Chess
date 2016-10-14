@@ -7,6 +7,8 @@ use Chess\Interfaces\Board as BoardInterface;
 use Chess\Interfaces\Player as PlayerInterface;
 use Chess\Interfaces\Move as MoveInterface;
 use Chess\Interfaces\Figure as FigureInterface;
+use Chess\Interfaces\Figures\King;
+use Chess\Interfaces\Figures\Castles;
 use Chess\Interfaces\Figures\Promotes;
 
 class Move implements MoveInterface
@@ -65,7 +67,7 @@ class Move implements MoveInterface
 
         $fromFigure = $this->board->get($fromX, $fromY);
 
-        if ($fromFigure === null) {
+        if (! $fromFigure instanceof FigureInterface) {
             die('Could not find figure on '.$fromX.$fromY);
         }
 
@@ -73,10 +75,17 @@ class Move implements MoveInterface
             die('This figure does not belong to you');
         }
 
-        if (! $fromFigure->canMoveTo($toX, $toY)) {
+        if (
+            $fromFigure instanceof King
+            &&
+            $fromFigure->isMoveCastling($toX, $toY)
+            &&
+            $fromFigure->canCastle($toX, $toY)
+        ) {
+            $this->handleCastling($fromFigure, $toX, $toY);
+        } else if (! $fromFigure->canMoveTo($toX, $toY)) {
             die('You cannot move there');
         }
-
 
         $this->board->remove($fromX, $fromY);
 
@@ -121,6 +130,34 @@ class Move implements MoveInterface
         $this->promotes = $figure;
 
         return $this;
+    }
+
+    /**
+     * @param FigureInterface $figure
+     */
+    protected function handleCastling(FigureInterface $figure, string $x, int $y)
+    {
+        list ($currentX, $currentY) =  $figure->getCastlingPartnerPosition($x, $y);
+
+        $castlingFigure = $this->board->get($currentX, $currentY);
+
+        if (! $castlingFigure instanceof Castles) {
+            die('Figure at the end of the board cannot partake in castling');
+        }
+
+        list ($castlingX, $castlingY) = $figure->getCastlingPartnerDestination($x, $y);
+
+        if (! $castlingFigure->canCastle($castlingX, $castlingY)) {
+            die('Castling figure is not allowed to castle');
+        }
+
+        if (! $castlingFigure->canMoveTo($castlingX, $castlingY)) {
+            die('Castling figure cannot be moved to desired position');
+        }
+
+        // Move castling figure
+        $this->board->remove($currentX, $currentY);
+        $this->board->set($castling "X, $castlingY, $castlingFigure);
     }
 
     /**

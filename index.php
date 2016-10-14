@@ -31,6 +31,6 @@ $board->add('d', 8, $playerTwo, Chess\Figures\Queen::class);
 // Create game
 $game = new Chess\Game($board, $players);
 
-$game->player('whites')->move()->from('e1')->to('c1');
+$game->player('whites')->move()->from('e1')->to('g1');
 
 dd($game);
