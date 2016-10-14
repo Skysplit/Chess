@@ -157,7 +157,7 @@ class Move implements MoveInterface
 
         // Move castling figure
         $this->board->remove($currentX, $currentY);
-        $this->board->set($castling "X, $castlingY, $castlingFigure);
+        $this->board->set($castlingX, $castlingY, $castlingFigure);
     }
 
     /**
