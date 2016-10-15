@@ -3,6 +3,7 @@
 namespace Chess;
 
 use ReflectionClass;
+use Chess\Exceptions\BoardException;
 use Chess\Interfaces\Board as BoardInterface;
 use Chess\Interfaces\Player as PlayerInterface;
 use Chess\Interfaces\Figure as FigureInterface;
@@ -82,13 +83,14 @@ class Board implements BoardInterface
     public function add(string $x, int $y, PlayerInterface $player, $figure)
     {
         if (is_string($figure) && ! class_exists($figure)) {
-            die('Class does not exists');
+            throw new BoardException("Class {$figure} does not exists");
         }
 
         $reflection = new ReflectionClass($figure);
+        $figureInterface = FigureInterface::class;
 
-        if (! $reflection->implementsInterface(FigureInterface::class)) {
-            die('Class must implement figure interface');
+        if (! $reflection->implementsInterface($figureInterface)) {
+            throw new BoardException("Class {$figure} must implement {$figureInterface}");
         }
 
         /** @var FigureInterface $figure */
@@ -105,7 +107,7 @@ class Board implements BoardInterface
     public function set(string $x, int $y, FigureInterface $figure)
     {
         if (! $this->isFieldInBoundaries($x, $y)) {
-            die('Field not in board boundaries');
+            throw new BoardException("Field {$x}{$y} is not in board boundaries");
         }
 
         $figure->setX($x);
@@ -120,7 +122,7 @@ class Board implements BoardInterface
     public function get(string $x, int $y)
     {
         if (! $this->isFieldInBoundaries($x, $y)) {
-            die('Field not in boundaries');
+            throw new BoardException("Field {$x}{$y} is not in board boundaries");
         }
 
         return $this->fields[$x][$y];
@@ -160,7 +162,7 @@ class Board implements BoardInterface
         $playerIdentifier = $player->id();
 
         if (empty($this->stack[$playerIdentifier][$figure])) {
-            die('Figures stack is empty');
+            throw new BoardException('Figures stack is empty');
         }
 
         return array_shift($this->stack[$playerIdentifier][$figure]);
